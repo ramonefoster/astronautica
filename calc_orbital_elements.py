@@ -1,4 +1,8 @@
 """
+
+Author: Ramon Gargalhone <ramones@ita.br>
+@ Instituto Tecnologico de Aeronautica - ITA
+
 Semi-eixo maior (a): Este é o semi-eixo da elipse que define a órbita. É metade da distância máxima entre o objeto e o centro da órbita (foco). 
 
 Excentricidade (e): A excentricidade determina a forma da órbita, sendo 0 para uma órbita perfeitamente circular e 1 para uma órbita parabólica. 
