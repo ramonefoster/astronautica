@@ -1,6 +1,6 @@
 """
 
-Author: Ramon Gargalhone <ramones@ita.br>
+Author: Ramones
 @ Instituto Tecnologico de Aeronautica - ITA
 
 Semi-eixo maior (a): Este é o semi-eixo da elipse que define a órbita. É metade da distância máxima entre o objeto e o centro da órbita (foco). 
