@@ -220,7 +220,7 @@ def plot_orbit(a, e, i, Omegao, omega, f):
     ax.set_xlabel('X (km)')
     ax.set_ylabel('Y (km)')
     ax.set_zlabel('Z (km)')
-    ax.set_title('Órbita com Elementos Keplerianos e Plano do Equador')
+    ax.set_title('Órbita com Elementos Keplerianos')
     ax.legend()
 
     # Mostra o gráfico

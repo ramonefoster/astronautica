@@ -19,15 +19,19 @@ Anomalia verdadeira (f): A anomalia verdadeira é o ângulo medido a partir do p
 """
 import numpy as np
 from math import sqrt, acos, degrees
+import os
+from termcolor import colored
+
+os.system('color')
 
 def print_step(step_num, description, value=None, unit=None):
     print(f"\n=== Passo {step_num} ===")
-    print(description)
+    print(colored(description, 'yellow'))
     if value is not None:
         if unit is not None:
-            print(f"Resultado: {value} {unit}")
+            print(f"Resultado: {colored(value, 'green')} {unit}")
         else:
-            print(f"Resultado: {value}")
+            print(f"Resultado: {colored(value, 'green')}")
 
 def calc_elements(r_vec, v_vec, grav_parameter):
     # Constantes
@@ -112,12 +116,12 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     print_step(10, "Cálculo da anomalia verdadeira (f)", f"{f:.2f}°")
     
     print("\n===== Resultados Finais =====")
-    print(f"Semi-eixo maior (a): {a:.2f} km")
-    print(f"Excentricidade (e): {e:.3f}")
-    print(f"Inclinação (I): {I:.2f}°")
-    print(f"Longitude do nodo ascendente (Ω): {Omegao:.2f}°")
-    print(f"Argumento do pericentro (ω): {w:.2f}°")
-    print(f"Anomalia verdadeira (f): {f:.2f}°")
+    print(f"Semi-eixo maior (a): {colored(f'{a:.2f} km', 'green')} ")
+    print(f"Excentricidade (e): {colored(f'{e:.3f}', 'green')}")
+    print(f"Inclinação (I): {colored(f'{I:.2f}°', 'green')}")
+    print(f"Longitude do nodo ascendente (Ω): {colored(f'{Omegao:.2f}°', 'green')}")
+    print(f"Argumento do pericentro (ω): {colored(f'{w:.2f}°', 'green')}")
+    print(f"Anomalia verdadeira (f): {colored(f'{f:.2f}°', 'green')}")
     return a,e,I,Omegao,w,f
 
 
@@ -135,9 +139,9 @@ if __name__ == "__main__":
     μ = 1 
 
     # Ex 2:
-    r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
-    v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
-    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    # r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
+    # v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
+    # μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
     a,e,i,Omegao,w,f = calc_elements(r_vec, v_vec, grav_parameter=μ)
     plot_orbit(a,e,i,Omegao,w,f)
