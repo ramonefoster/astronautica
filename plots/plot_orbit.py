@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D, art3d
-from matplotlib.patches import FancyArrowPatch, Arc
+from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 class AngleAnnotation3D:
@@ -175,7 +174,7 @@ def plot_orbit(a, e, i, Omegao, omega, f):
             color='red', s=50, label='Posição atual')
 
     # Marca a posição atual
-    ax.scatter(0, 1, 2, 
+    ax.scatter(0, 0, 0, 
             color='orange', s=100, label='Corpo Massivo')
     
     # Linha dos Apsis

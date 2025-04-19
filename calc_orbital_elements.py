@@ -29,9 +29,9 @@ def print_step(step_num, description, value=None, unit=None):
         else:
             print(f"Resultado: {value}")
 
-def calc_elements(r_vec, v_vec):
+def calc_elements(r_vec, v_vec, grav_parameter):
     # Constantes
-    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    μ = grav_parameter  # km³/s² (parâmetro gravitacional da Terra)
     
     print("===== Cálculo dos Elementos Orbitais =====")
     
@@ -122,9 +122,22 @@ def calc_elements(r_vec, v_vec):
 
 
 if __name__ == "__main__":
-    from plots.plot_orbit import plot_orbit  # Importando a função de plotagem
-    # Dados iniciais
+    from plots.plot_orbit import plot_orbit 
+
+    # SAMPLE 1    
     r_vec = np.array([1.0, 0.0, sqrt(3)]) * 1e4  # km (vetor posição)
     v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
-    a,e,i,Omegao,w,f = calc_elements(r_vec, v_vec)
+    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+
+    # EX 1:
+    r_vec = np.array([1.0, -1.0, -1])  # u.d (vetor posição)
+    v_vec = np.array([.4, .2, .4])  # u.d (vetor velocidade)
+    μ = 1 
+
+    # Ex 2:
+    r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
+    v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
+    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+
+    a,e,i,Omegao,w,f = calc_elements(r_vec, v_vec, grav_parameter=μ)
     plot_orbit(a,e,i,Omegao,w,f)
