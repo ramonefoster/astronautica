@@ -1,13 +1,17 @@
 """
 
-Author: Ramones
+Author: Ramon Carlos Gargalhone
 @ Instituto Tecnologico de Aeronautica - ITA
+
+Esse script foi baseado nos Exercicios Resolvidos do Capitulo 3, do livro: 'Fundamentos de Astronáutica e suas Aplicações Volume I', 
+                                        de Maria Cecília França de Paula Santos Zanardi, Sandro da Silva Fernandes
 
 Semi-eixo maior (a): Este é o semi-eixo da elipse que define a órbita. É metade da distância máxima entre o objeto e o centro da órbita (foco). 
 
 Excentricidade (e): A excentricidade determina a forma da órbita, sendo 0 para uma órbita perfeitamente circular e 1 para uma órbita parabólica. 
 
 Inclinação (I): A inclinação é o ângulo entre o plano orbital do objeto e o plano de referência (normalmente o equador do corpo central). 
+I = 0, indica orbita equatorial, enquanto I = 90 indica uma órbita polar.
 
 Longitude do nodo ascendente (Ω): Este é o ângulo no plano de referência a partir de uma direção de referência até o ponto onde a órbita 
 cruza o plano de referência de sul para norte.
@@ -35,7 +39,7 @@ def print_step(step_num, description, value=None, unit=None):
 
 def calc_elements(r_vec, v_vec, grav_parameter):
     # Constantes
-    μ = grav_parameter  # km³/s² (parâmetro gravitacional da Terra)
+    μ = grav_parameter
     
     print("===== Cálculo dos Elementos Orbitais =====")
     
@@ -50,16 +54,16 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     ε = 0.5 * v**2 - μ/r
     print_step(2, "Cálculo da energia específica (ε = ½v² - μ/r)", f"{ε:.2f} km²/s²")
     
-    # Momento angular específico
+    # Momentum angular específico
     h_vec = np.cross(r_vec, v_vec)
     h = np.linalg.norm(h_vec)
     print_step(2, "Cálculo do vetor momento angular (h = r × v)", 
               (f"Vetor h: {h_vec} km²/s", f"Magnitude h: {h:.3f} km²/s"))
     
-    # Vetor excentricidade
+    # Vetor Laplace Runge-Lenz B
     B_vec = np.cross(v_vec, h_vec) - μ * r_vec / r
     B = np.linalg.norm(B_vec)
-    print_step(2, "Cálculo do vetor excentricidade (B = v × h - μr/r)", 
+    print_step(2, "Cálculo do Vetor Laplace Runge-Lenz (B = v × h - μr/r)", 
               (f"Vetor B: {B_vec} km³/s²", f"Magnitude B: {B:.3f} km³/s²"))
     
     # Passo 3: Determinação do vetor nodal N
@@ -81,16 +85,16 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     e = B / μ
     print_step(6, "Cálculo da excentricidade (e = B/μ)", f"{e:.3f}")
     
-    # Passo 7: Determinação da inclinação
+    # Passo 7: Determinação da inclinação do plano da órbita
     I = degrees(acos(np.dot(k, h_vec)/h))
-    print_step(7, "Cálculo da inclinação (I = arccos(k·h/h))", f"{I:.2f}°")
+    print_step(7, "Cálculo da inclinação do plano da órbita (I = arccos(k·h/h))", f"{I:.2f}°")
     
     # Passo 8: Determinação da longitude do nodo ascendente
     i = np.array([1, 0, 0])
     Omegao_cos = np.dot(i, N_vec)/N
     Omegao = degrees(acos(Omegao_cos))
     
-    # Determinar o quadrante (j·N < 0 → 4º quadrante)
+    # Determinar o quadrante (j·N < 0 -> 4º quadrante)
     j = np.array([0, 1, 0])
     if np.dot(j, N_vec) < 0:
         Omegao = 360 - Omegao
@@ -101,7 +105,7 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     w_cos = np.dot(B_vec, N_vec)/(B*N)
     w = degrees(acos(w_cos))
     
-    # Determinar o quadrante (k·B < 0 → 4º quadrante)
+    # Determinar o quadrante (k·B < 0 -> 4º quadrante)
     if np.dot(k, B_vec) < 0:
         w = 360 - w
     print_step(9, "Cálculo do argumento do pericentro (ω)", f"{w:.2f}°")
@@ -110,7 +114,7 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     f_cos = np.dot(B_vec, r_vec)/(B*r)
     f = degrees(acos(f_cos))
     
-    # Determinar o quadrante (r·v > 0 → 2º quadrante)
+    # Determinar o quadrante (r·v > 0 -> 2º quadrante)
     if np.dot(r_vec, v_vec) > 0:
         f = 360 - f
     print_step(10, "Cálculo da anomalia verdadeira (f)", f"{f:.2f}°")
@@ -122,7 +126,8 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     print(f"Longitude do nodo ascendente (Ω): {colored(f'{Omegao:.2f}°', 'green')}")
     print(f"Argumento do pericentro (ω): {colored(f'{w:.2f}°', 'green')}")
     print(f"Anomalia verdadeira (f): {colored(f'{f:.2f}°', 'green')}")
-    return a,e,I,Omegao,w,f
+
+    return a, e, I, Omegao, w, f, h_vec
 
 
 if __name__ == "__main__":
@@ -139,9 +144,9 @@ if __name__ == "__main__":
     μ = 1 
 
     # Ex 2:
-    # r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
-    # v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
-    # μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
+    v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
+    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
-    a,e,i,Omegao,w,f = calc_elements(r_vec, v_vec, grav_parameter=μ)
-    plot_orbit(a,e,i,Omegao,w,f)
+    a,e,i,Omegao,w,f,h_vec = calc_elements(r_vec, v_vec, grav_parameter=μ)    
+    plot_orbit(a,e,i,Omegao,w,f,h_vec)

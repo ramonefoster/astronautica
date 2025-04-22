@@ -29,7 +29,7 @@ class AngleAnnotation3D:
         self.rot_axis = self.rot_axis / rot_norm if rot_norm > 1e-8 else np.array([0, 0, 1])
         
         # Check if we need to flip the angle direction
-        # We want the angle to go from v1 to v2 in the conventional direction
+        # Angle from v1 to v2 in the conventional direction
         if self.rot_axis[2] < 0:
             angle = 2 * np.pi - angle
             self.rot_axis = -self.rot_axis
@@ -37,7 +37,6 @@ class AngleAnnotation3D:
         self.angle = angle
         self.text = self.text or f"{np.degrees(angle):.2f}°"
         
-        # Generate arc points
         self.generate_arc()
         self.draw()
     
@@ -71,7 +70,7 @@ class AngleAnnotation3D:
             self.ax.text(mid_pt[0], mid_pt[1], mid_pt[2], 
                         self.text, color=self.color)
 
-# Classe para setas 3D personalizadas
+# Custom class for arrows
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
         super().__init__((0,0), (0,0), *args, **kwargs)
@@ -83,17 +82,17 @@ class Arrow3D(FancyArrowPatch):
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         return min(zs[0], zs[1])
     
-def plot_orbit(a, e, i, Omegao, omega, f):
-    # Dados orbitais
-    i = np.radians(i)  # inclinação em radianos
-    Omegao = np.radians(Omegao)  # longitude do nodo ascendente em radianos
-    omega = np.radians(omega)  # argumento do pericentro em radianos
-    f = np.radians(f)  # anomalia verdadeira em radianos
+def plot_orbit(a, e, i, Omegao, omega, f, h_vec):
+    # Input data in radians
+    i = np.radians(i)  # inclination
+    Omegao = np.radians(Omegao)  # Longitude of the ascending node
+    omega = np.radians(omega)  # Argument of periapsis 
+    f = np.radians(f)  # true anomaly
 
-    # Calcula a distância no ponto atual
+    # mag r
     r = a * (1 - e**2) / (1 + e * np.cos(f))
 
-    # Vetor posição no sistema orbital (perifocal)
+    # vector
     r_peri = np.array([
         r * np.cos(f),
         r * np.sin(f),
@@ -122,21 +121,20 @@ def plot_orbit(a, e, i, Omegao, omega, f):
     R_ω = rotation_matrix_z(omega)
     R = R_Ω @ R_i @ R_ω
 
-    # Transforma para sistema inercial
+    # Inertial system
     r_inertial = R @ r_peri
 
-    # Gera pontos para a órbita completa
+    # Plot whole orbit
     theta = np.linspace(0, 2*np.pi, 1000)
     r_vals = a * (1 - e**2) / (1 + e * np.cos(theta))
     x_peri = r_vals * np.cos(theta)
     y_peri = r_vals * np.sin(theta)
     z_peri = np.zeros_like(theta)
 
-    # Transforma todos os pontos da órbita
+    # Transform to inertial system
     orbit_points = np.vstack([x_peri, y_peri, z_peri])
     orbit_inertial = R @ orbit_points
 
-    # Cria a figura 3D
     fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -152,77 +150,75 @@ def plot_orbit(a, e, i, Omegao, omega, f):
                 origin[2]+direction[2]*length*1.1,
                 label, color=color)
 
-    # Vetores de referência
+    # XYZ reference coordinates
     x_axis = np.array([1,0,0])
     y_axis = np.array([0,1,0])
     z_axis = np.array([0,0,1])
 
-    # Linha dos nodos (Ω)
+    # Nodes line (Ω)
     nodal_axis = np.array([np.cos(Omegao), np.sin(Omegao), 0])
-    plot_vector([0,0,0], nodal_axis, 'green', 'Ω: Nodo Ascendente')
+    plot_vector([0,0,0], nodal_axis, 'green', 'Ascending Node')
 
-    # Direção do pericentro (ω)
+    # Pericenter direction (ω)
     pericentro = R @ x_axis
-    plot_vector([0,0,0], pericentro, 'orange', 'ω: Pericentro', 0.6*a)
+    plot_vector([0,0,0], pericentro, 'orange', 'Periapsis', 0.6*a)
 
-    # Plota a órbita
+    # Plot Orbit
     ax.plot(orbit_inertial[0], orbit_inertial[1], orbit_inertial[2], 
-            label='Órbita', linewidth=1)
+            label='Orbit', linewidth=1)
 
-    # Marca a posição atual
+    # Small Body (this case, a satellite)
     ax.scatter(r_inertial[0], r_inertial[1], r_inertial[2], 
-            color='red', s=50, label='Posição atual')
+            color='red', s=50, label='Satellite')
 
-    # Marca a posição atual
+    # Massive Body (this case, a planet)
     ax.scatter(0, 0, 0, 
-            color='orange', s=100, label='Corpo Massivo')
+            color='orange', s=100, label='Planet')
     
-    # Linha dos Apsis
+    # Apsis Line
     r_inertial = R @ r_peri
     pericenter = R @ np.array([a*(1-e), 0, 0])
     apocenter = R @ np.array([-a*(1+e), 0, 0])
     ax.plot([pericenter[0], apocenter[0]], 
             [pericenter[1], apocenter[1]], 
             [pericenter[2], apocenter[2]], 
-            'm--', linewidth=2, label='Linha dos Apsis')
+            'm--', linewidth=2, label='Apsis')
 
-    # 5. Linha dos Nodos (interseção dos planos)
+    # 5. Nodes (intersection of orbital and equatorial planes)
     ax.plot([0, nodal_axis[0]*a*1.2],
         [0, nodal_axis[1]*a*1.2],
         [0, nodal_axis[2]*a*1.2],
-        'g--', linewidth=2, label='Line of Nodes')
+        'g--', linewidth=2, label='Nodes')
 
-    # Desenha o plano do equador (plano XY)
+    # Draw Equatorial Plane
     xx, yy = np.meshgrid(np.linspace(-2*a, 2*a, 2), np.linspace(-2*a, 2*a, 2))
     zz = np.zeros_like(xx)
-    ax.plot_surface(xx, yy, zz, color='grey', alpha=0.3, label='Plano do Equador')
+    ax.plot_surface(xx, yy, zz, color='grey', alpha=0.3, label='Equatorial Plane')
 
-    # Desenha linhas dos eixos
+    # Axis arrows
     ax.quiver(0, 0, 0, .3*a, 0, 0, color='k', arrow_length_ratio=0.1)
     ax.quiver(0, 0, 0, 0, .3*a, 0, color='k', arrow_length_ratio=0.1)
     ax.quiver(0, 0, 0, 0, 0, .3*a, color='k', arrow_length_ratio=0.1)
     plot_vector([0,0,0], r_inertial, 'red', 'R', 1)
 
     x_axis = np.array([1,0,0])
-    # NEED TO FIX ANGLE DIRECTION
     AngleAnnotation3D(ax, [0,0,0], x_axis, nodal_axis, radius=0.3*a, color='green', 
                  text=f'Ω = {np.degrees(Omegao):.1f}°')
     AngleAnnotation3D(ax, [0,0,0], nodal_axis, pericenter, radius=0.4*a, color='orange', 
                  text=f'ω = {np.degrees(omega):.1f}°')
     AngleAnnotation3D(ax, [0,0,0], pericenter, r_inertial, radius=0.2*a, color='red', 
                  text=f'f = {np.degrees(f):.1f}°')
+    # AngleAnnotation3D(ax, [0,0,0], z_axis, h_vec, radius=0.2*a, color='cyan', 
+    #              text=f'I = {np.degrees(i):.1f}°')
     
-
-    # Configurações do gráfico
     ax.set_xlim([-1.5*a, 1.5*a])
     ax.set_ylim([-1.5*a, 1.5*a])
     ax.set_zlim([-1.5*a, 1.5*a])
     ax.set_xlabel('X (km)')
     ax.set_ylabel('Y (km)')
     ax.set_zlabel('Z (km)')
-    ax.set_title('Órbita com Elementos Keplerianos')
+    ax.set_title('Orbital elements')
     ax.legend()
 
-    # Mostra o gráfico
     plt.tight_layout()
     plt.show()
