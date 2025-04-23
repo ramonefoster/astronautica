@@ -82,7 +82,7 @@ class Arrow3D(FancyArrowPatch):
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         return min(zs[0], zs[1])
     
-def plot_orbit(a, e, i, Omegao, omega, f, h_vec):
+def plot_orbit(a, e, i, Omegao, omega, f, h_vec=None):
     # Input data in radians
     i = np.radians(i)  # inclination
     Omegao = np.radians(Omegao)  # Longitude of the ascending node

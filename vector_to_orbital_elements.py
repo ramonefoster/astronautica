@@ -22,7 +22,6 @@ Argumento do pericentro (ω): O argumento do pericentro é o ângulo medido ao l
 Anomalia verdadeira (f): A anomalia verdadeira é o ângulo medido a partir do pericentro até a posição atual do objeto na órbita. 
 """
 import numpy as np
-from math import sqrt, acos, degrees
 import os
 from termcolor import colored
 
@@ -47,7 +46,7 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     r = np.linalg.norm(r_vec)
     v = np.linalg.norm(v_vec)
     print_step(1, "Cálculo das magnitudes dos vetores posição e velocidade r=sqrt(r_i²+r_j²+r_k²) e v=sqrt(v_i²+v_j²+v_k²)", 
-              (f"r = {r:.1f} km", f"v = {v:.1f} km/s"))
+              (f"r = {r:.3f} km", f"v = {v:.3f} km/s"))
     
     # Passo 2: Determinação das Integrais Primeiras
     # Energia específica
@@ -57,7 +56,7 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     # Momentum angular específico
     h_vec = np.cross(r_vec, v_vec)
     h = np.linalg.norm(h_vec)
-    print_step(2, "Cálculo do vetor momento angular (h = r × v)", 
+    print_step(2, "Cálculo do vetor momentum angular (h = r × v)", 
               (f"Vetor h: {h_vec} km²/s", f"Magnitude h: {h:.3f} km²/s"))
     
     # Vetor Laplace Runge-Lenz B
@@ -74,7 +73,7 @@ def calc_elements(r_vec, v_vec, grav_parameter):
               (f"Vetor N: {N_vec} km²/s", f"Magnitude N: {N:.3f} km²/s"))
     
     # Passo 4: Determinação do parâmetro adimensional Q
-    Q = r * v**2 / μ
+    Q = (r * v**2) / μ
     print_step(4, "Cálculo do parâmetro adimensional Q = rv²/μ", f"{Q:.3f}")
     
     # Passo 5: Determinação do semi-eixo maior
@@ -86,38 +85,38 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     print_step(6, "Cálculo da excentricidade (e = B/μ)", f"{e:.3f}")
     
     # Passo 7: Determinação da inclinação do plano da órbita
-    I = degrees(acos(np.dot(k, h_vec)/h))
+    I = np.degrees(np.arccos(np.dot(k, h_vec)/h))
     print_step(7, "Cálculo da inclinação do plano da órbita (I = arccos(k·h/h))", f"{I:.2f}°")
     
     # Passo 8: Determinação da longitude do nodo ascendente
     i = np.array([1, 0, 0])
     Omegao_cos = np.dot(i, N_vec)/N
-    Omegao = degrees(acos(Omegao_cos))
+    Omegao = np.degrees(np.arccos(Omegao_cos))
     
     # Determinar o quadrante (j·N < 0 -> 4º quadrante)
     j = np.array([0, 1, 0])
     if np.dot(j, N_vec) < 0:
         Omegao = 360 - Omegao
     
-    print_step(8, "Cálculo da longitude do nodo ascendente (Ω)", f"{Omegao:.2f}°")
+    print_step(8, "Cálculo da longitude do nodo ascendente (Ω = arccos(i·N/N)))", f"{Omegao:.2f}°")
     
     # Passo 9: Determinação do argumento do pericentro
     w_cos = np.dot(B_vec, N_vec)/(B*N)
-    w = degrees(acos(w_cos))
+    w = np.degrees(np.arccos(w_cos))
     
     # Determinar o quadrante (k·B < 0 -> 4º quadrante)
     if np.dot(k, B_vec) < 0:
         w = 360 - w
-    print_step(9, "Cálculo do argumento do pericentro (ω)", f"{w:.2f}°")
+    print_step(9, "Cálculo do argumento do pericentro (ω = arccos(B·N/BN))", f"{w:.2f}°")
     
     # Passo 10: Determinação da anomalia verdadeira
     f_cos = np.dot(B_vec, r_vec)/(B*r)
-    f = degrees(acos(f_cos))
+    f = np.degrees(np.arccos(f_cos))
     
     # Determinar o quadrante (r·v > 0 -> 2º quadrante)
     if np.dot(r_vec, v_vec) > 0:
         f = 360 - f
-    print_step(10, "Cálculo da anomalia verdadeira (f)", f"{f:.2f}°")
+    print_step(10, "Cálculo da anomalia verdadeira (f = arccos(B·r/Br))", f"{f:.2f}°")
     
     print("\n===== Resultados Finais =====")
     print(f"Semi-eixo maior (a): {colored(f'{a:.2f} km', 'green')} ")
@@ -133,17 +132,17 @@ def calc_elements(r_vec, v_vec, grav_parameter):
 if __name__ == "__main__":
     from plots.plot_orbit import plot_orbit 
 
-    # SAMPLE 1    
-    r_vec = np.array([1.0, 0.0, sqrt(3)]) * 1e4  # km (vetor posição)
-    v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
-    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    # # SAMPLE 1    
+    # r_vec = np.array([1.0, 0.0, np.sqrt(3)]) * 1e4  # km (vetor posição)
+    # v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
+    # μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
     # EX 1:
     r_vec = np.array([1.0, -1.0, -1])  # u.d (vetor posição)
     v_vec = np.array([.4, .2, .4])  # u.d (vetor velocidade)
     μ = 1 
 
-    # Ex 2:
+    # # Ex 2:
     r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
     v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
     μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
