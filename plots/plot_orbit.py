@@ -82,11 +82,11 @@ class Arrow3D(FancyArrowPatch):
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         return min(zs[0], zs[1])
     
-def plot_orbit(a, e, i, Omegao, omega, f, h_vec=None):
+def plot_orbit(a, e, I, Omega, w, f, h=None):
     # Input data in radians
-    i = np.radians(i)  # inclination
-    Omegao = np.radians(Omegao)  # Longitude of the ascending node
-    omega = np.radians(omega)  # Argument of periapsis 
+    i = np.radians(I)  # inclination
+    Omegao = np.radians(Omega)  # Longitude of the ascending node
+    omega = np.radians(w)  # Argument of periapsis 
     f = np.radians(f)  # true anomaly
 
     # mag r

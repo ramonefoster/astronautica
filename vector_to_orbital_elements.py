@@ -36,7 +36,25 @@ def print_step(step_num, description, value=None, unit=None):
         else:
             print(f"Resultado: {colored(value, 'green')}")
 
-def calc_elements(r_vec, v_vec, grav_parameter):
+def calc_elements(r_vec, v_vec, grav_parameter=398600):
+    """
+    Calcula os elementos orbitais a partir dos vetores posição e velocidade.
+    
+    Args:
+        r_vec (`np.array`): Vetor posição (km).
+        v_vec (`np.array`): Vetor velocidade (km/s).
+        grav_parameter (`float`): Parâmetro gravitacional do corpo central (km³/s²). Default is 398600 (Terra).
+
+    Returns:
+        orbital_elements (`dict`): Dicionário com os elementos orbitais:
+            - 'a': semi-eixo maior (km)
+            - 'e': excentricidade (adimensional)
+            - 'i': inclinação (graus)
+            - 'Omega': longitude do nodo ascendente (graus)
+            - 'w': argumento do pericentro (graus)
+            - 'f': anomalia verdadeira (graus)
+            - 'h_vec': vetor momentum angular específico (km²/s)
+    """
     # Constantes
     μ = grav_parameter
     
@@ -126,7 +144,16 @@ def calc_elements(r_vec, v_vec, grav_parameter):
     print(f"Argumento do pericentro (ω): {colored(f'{w:.2f}°', 'green')}")
     print(f"Anomalia verdadeira (f): {colored(f'{f:.2f}°', 'green')}")
 
-    return a, e, I, Omegao, w, f, h_vec
+    orbital_elements = {
+        'a': a,
+        'e': e,
+        'I': I,
+        'Omega': Omegao,
+        'w': w,
+        'f': f,
+        'h': h_vec
+    }
+    return orbital_elements
 
 
 if __name__ == "__main__":
@@ -147,5 +174,5 @@ if __name__ == "__main__":
     v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
     μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
-    a,e,i,Omegao,w,f,h_vec = calc_elements(r_vec, v_vec, grav_parameter=μ)    
-    plot_orbit(a,e,i,Omegao,w,f,h_vec)
+    orbital_elements = calc_elements(r_vec, v_vec, grav_parameter=μ)    
+    plot_orbit(**orbital_elements)
