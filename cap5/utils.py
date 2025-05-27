@@ -6,10 +6,7 @@ def kepler_f(E, M, e):
 def kepler_fp(E, e):
     return -1 + e * np.cos(E)
 
-def kepler_fs(E, e):
-    return -e * np.sin(E)
-
-# Newton–Raphson
+# Newton–Raphson for elliptical orbits
 def newton_raphson(E0, M, e, tol=1e-15, max_iter=100):
     E = E0
     for i in range(max_iter):
@@ -24,21 +21,26 @@ def newton_raphson(E0, M, e, tol=1e-15, max_iter=100):
         E = En
     return E
 
-def newton_raphson_sec(E0, M, e, tol=1e-15, max_iter=100):
-    E = E0
-    for i in range(max_iter):
-        f  = kepler_f(E, M, e)
-        fp = kepler_fp(E, e)
-        fs = kepler_fs(E, e)
-        dE = -f / fp
-        dE2 = -f/(fp+0.5*dE*fs)
-        En = E + dE2
+def kepler_f_hyperbolic(F, N, e):
+    return e * np.sinh(F) - F - N
 
-        if abs(En - E) < tol:
+def kepler_fp_hyperbolic(F, e):
+    return e * np.cosh(F) - 1
+
+# Newton–Raphson for hyperbolic orbits
+def newton_raphson_hyperbolic(F0, N, e, tol=1e-15, max_iter=100):
+    F = F0
+    for i in range(max_iter):
+        f  = kepler_f_hyperbolic(F, N, e)
+        fp = kepler_fp_hyperbolic(F, e)
+        dF = -f / fp
+        Fn = F + dF
+
+        if abs(Fn - F) < tol:
             break
 
-        E = En
-    return E
+        F = Fn
+    return F
 
 import matplotlib.pyplot as plt
 import numpy as np
