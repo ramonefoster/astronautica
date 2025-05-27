@@ -173,7 +173,7 @@ def plot_orbit(a, e, I, Omega, w, f, h=None):
 
     # Massive Body (this case, a planet)
     ax.scatter(0, 0, 0, 
-            color='orange', s=100, label='Planet')
+            color='orange', s=6378, label='Planet')
     
     # Apsis Line
     r_inertial = R @ r_peri

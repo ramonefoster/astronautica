@@ -160,9 +160,9 @@ if __name__ == "__main__":
     from plots.plot_orbit import plot_orbit 
 
     # # SAMPLE 1    
-    # r_vec = np.array([1.0, 0.0, np.sqrt(3)]) * 1e4  # km (vetor posição)
-    # v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
-    # μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    r_vec = np.array([1.0, 0.0, np.sqrt(3)]) * 1e4  # km (vetor posição)
+    v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
+    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
     # EX 1:
     r_vec = np.array([1.0, -1.0, -1])  # u.d (vetor posição)
@@ -170,9 +170,9 @@ if __name__ == "__main__":
     μ = 1 
 
     # # Ex 2:
-    r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
-    v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
-    μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
+    # r_vec = np.array([6.0, 6.0, 0]) * 1e3  # km (vetor posição)
+    # v_vec = np.array([-4.0, -4.0, 6.0])  # km/s (vetor velocidade)
+    # μ = 398600  # km³/s² (parâmetro gravitacional da Terra)
 
     orbital_elements = calc_elements(r_vec, v_vec, grav_parameter=μ)    
     plot_orbit(**orbital_elements)
