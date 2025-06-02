@@ -79,14 +79,6 @@ def calc_elements(r_vec, v_vec, grav_parameter=398600):
     # Determinar o quadrante (r·v > 0 -> 2º quadrante)
     if np.dot(r_vec, v_vec) < 0:
         f = 360 - f
-    
-    # print("\n===== Resultados Finais =====")
-    # print(f"Semi-eixo maior (a): {(f'{a:.2f} km')} ")
-    # print(f"Excentricidade (e): {(f'{e:.4f}')}")
-    # print(f"Inclinação (I): {(f'{I:.2f}°')}")
-    # print(f"Longitude do nodo ascendente (Ω): {(f'{Omegao:.2f}°')}")
-    # print(f"Argumento do pericentro (ω): {(f'{w:.2f}°')}")
-    # print(f"Anomalia verdadeira (f): {(f'{f:.2f}°')}")
 
     orbital_elements = {
         'a': a,

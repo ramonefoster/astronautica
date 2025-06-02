@@ -42,6 +42,36 @@ def newton_raphson_hyperbolic(F0, N, e, tol=1e-15, max_iter=100):
         F = Fn
     return F
 
+def newton_raphson_universal(guess, deltaT, a, r0, v0, grav_param, tol=1e-15, max_iter=100):
+    X = guess
+
+    def dt(X, z, order):
+        if z > 0:
+            C = (1 - np.cos(np.sqrt(z))) / z
+            S = (np.sqrt(z) - np.sin(np.sqrt(z))) / np.sqrt(z**3)
+        elif round(z, 10) == 0:
+            C = 0.5
+            S = 1/6
+        else:
+            C = (1 - np.cosh(np.sqrt(-z))) / z
+            S = (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / np.sqrt(-z**3)
+        
+        if order == 0:
+            return ((X**3 * S) + (np.dot(r0,v0)*X**2*C/np.sqrt(grav_param)) + np.linalg.norm(r0)*X*(1-z*S))/np.sqrt(grav_param)
+        else:
+            return ((X**2*C) + (np.dot(r0,v0)*X*(1-z*S)/np.sqrt(grav_param)) + (np.linalg.norm(r0)*(1-z*C)))/np.sqrt(grav_param)
+
+    for i in range(max_iter):  
+        z = X**2/a      
+        Xnp = X + ((deltaT - dt(X, z, 0))/dt(X, z, 1))
+    
+        if abs(Xnp - X) < tol:
+            break
+
+        X = Xnp
+        
+    return X, z
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch

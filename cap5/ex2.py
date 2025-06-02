@@ -3,7 +3,10 @@ from rv_to_elements import calc_elements
 from utils import newton_raphson, plot_orbit
 
 def via_anomalia_verdadeira(r_vec, v_vec, dt, orbit_elem, grav_parameter=398600):
-    """    
+    """
+    Calcula a anomalia verdadeira e os vetores de posição e velocidade em um instante de tempo t
+    a partir da anomalia verdadeira inicial e do vetor de posição e velocidade iniciais.
+    
     Parâmetros:
     r_vec (np.array): vetor de posição inicial (km)
     v_vec (np.array): vetor de velocidade inicial (km/s)

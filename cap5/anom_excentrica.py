@@ -1,12 +1,9 @@
 import numpy as np
 from rv_to_elements import calc_elements
-from utils import newton_raphson, newton_raphson_hyperbolic
+from utils import newton_raphson, newton_raphson_hyperbolic, plot_orbit
 
 def via_anomalia_excentrica(r_vec, v_vec, dt, orbit_elem, grav_parameter=398600):
-    """
-    Calcula a anomalia excentrica e os vetores de posição e velocidade em um instante de tempo t
-    a partir da anomalia excentrica inicial e do vetor de posição e velocidade iniciais.
-    
+    """    
     Parâmetros:
     r_vec (np.array): vetor de posição inicial (km)
     v_vec (np.array): vetor de velocidade inicial (km/s)
@@ -34,6 +31,7 @@ def via_anomalia_excentrica(r_vec, v_vec, dt, orbit_elem, grav_parameter=398600)
         answer = calc_hyperbolic(r0, orbit_elem, grav_parameter)
     else:
         raise ValueError("Excentricidade inválida. Deve ser >= 0.")
+    
     return answer
 
 def calc_ecliptic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600):
@@ -47,8 +45,8 @@ def calc_ecliptic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600)
 
     for t in dt:
         # Convertendo horas para segundos
-        t = t * 3600
-        M = M0 + n*t
+        deltaT = t * 3600
+        M = M0 + n*deltaT
 
         # Anomalia Excentria no tempo T, utilizando New-Raphson
         E = newton_raphson(E0, M, orbit_elem['e'])
@@ -60,7 +58,7 @@ def calc_ecliptic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600)
 
         # Determinacao dos coeficientes de Lagrange f, g, f_dot e g_dot	
         F = 1 - (orbit_elem['a']/r0)*(1-np.cos(deltaE))
-        G = t - np.sqrt(orbit_elem['a']**3/grav_parameter)*(deltaE-np.sin(deltaE))
+        G = deltaT - np.sqrt(orbit_elem['a']**3/grav_parameter)*(deltaE-np.sin(deltaE))
         F_dot = -((np.sqrt(grav_parameter*orbit_elem['a'])/(r*r0)) * np.sin(deltaE))
         G_dot = 1 - (orbit_elem['a']/r)*(1-np.cos(deltaE))
 
@@ -68,7 +66,7 @@ def calc_ecliptic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600)
         r_vec_t = F * r_vec.T + G * v_vec.T
         v_vec_t = F_dot * r_vec.T + G_dot * v_vec.T
 
-        answer[f"{t/3600:.2f} horas"] = {
+        answer[f"{t} horas"] = {
                 "r_vec": r_vec_t,
                 "v_vec": v_vec_t
             }
@@ -96,8 +94,10 @@ def calc_parabolic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600
     D0 = np.sqrt(p) * ((3*Mp + np.sqrt(1 + 9*Mp**2))**(1/3) - (3*Mp + np.sqrt(1 + 9*Mp**2))**(-1/3))
 
     for t in dt:
+        deltaT = t * 3600
+
         # Anomalia Parabolica Media Mp
-        Mp = np.sqrt(grav_parameter/p**3) * t * 3600  # rad
+        Mp = np.sqrt(grav_parameter/p**3) * deltaT  # rad
 
         # Equação de Barker - Anomalia Parabolica Inicial
         D = np.sqrt(p) * ((3*Mp + np.sqrt(1 + 9*Mp**2))**(1/3) - (3*Mp + np.sqrt(1 + 9*Mp**2))**(-1/3))
@@ -105,18 +105,19 @@ def calc_parabolic(r_vec, v_vec, r0=None, orbit_elem=None, grav_parameter=398600
         r = 0.5 * (p + D**2)  # Distância do centro da Terra
     
         # Convertendo horas para segundos
-        t = t * 3600
-        F = 1 - (0.5/r0)*(D-D0)**2
-        G = ((D-D0)/np.sqrt(grav_parameter))*(r0+0.5*D0*(D-D0))
-        F_dot = -(np.sqrt(grav_parameter)/(r*r0)) * (D-D0)
-        G_dot = 1 - (0.5/r)*(D-D0)**2
+        deltaD = D-D0
+        
+        F = 1 - (0.5/r0)*(deltaD)**2
+        G = ((deltaD)/np.sqrt(grav_parameter))*(r0+0.5*D0*(deltaD))
+        F_dot = -(np.sqrt(grav_parameter)/(r*r0)) * (deltaD)
+        G_dot = 1 - (0.5/r)*(deltaD)**2
 
 
         # Determinacao dos vetores r e v
         r_vec_t = F * r_vec.T + G * v_vec.T
         v_vec_t = F_dot * r_vec.T + G_dot * v_vec.T
 
-        answer[f"{t/3600:.2f} horas"] = {
+        answer[f"{t} horas"] = {
                 "r_vec": r_vec_t,
                 "v_vec": v_vec_t
             }
@@ -144,8 +145,8 @@ def calc_hyperbolic(r0=None, orbit_elem=None, grav_parameter=398600):
     n = np.sqrt(grav_parameter/-orbit_elem['a']**3)
 
     for t in dt:
-        t = t * 3600
-        N = N0 + n*t
+        deltaT = t * 3600
+        N = N0 + n*deltaT
 
         # Anomalia Excentria no tempo T, utilizando New-Raphson
         F_anom = newton_raphson_hyperbolic(F0, N, orbit_elem['e'])
@@ -156,7 +157,7 @@ def calc_hyperbolic(r0=None, orbit_elem=None, grav_parameter=398600):
         r = orbit_elem['a']*(1-orbit_elem['e']*np.cosh(F_anom))
         
         F = 1 - (orbit_elem['a']/r0)*(1-np.cosh(deltaF))
-        G = t + np.sqrt(-orbit_elem['a']**3/grav_parameter) * (deltaF - np.sinh(deltaF))
+        G = deltaT + np.sqrt(-orbit_elem['a']**3/grav_parameter) * (deltaF - np.sinh(deltaF))
         F_dot = -((np.sqrt(-grav_parameter*orbit_elem['a'])/(r*r0)) * np.sinh(deltaF))
         G_dot = 1 - (orbit_elem['a']/r)*(1-np.cosh(deltaF))
 
@@ -164,7 +165,7 @@ def calc_hyperbolic(r0=None, orbit_elem=None, grav_parameter=398600):
         r_vec_t = F * r_vec.T + G * v_vec.T
         v_vec_t = F_dot * r_vec.T + G_dot * v_vec.T
 
-        answer[f"{t/3600:.2f} horas"] = {
+        answer[f"{t} horas"] = {
                 "r_vec": r_vec_t,
                 "v_vec": v_vec_t
             }        
@@ -181,21 +182,24 @@ dt = [0.5, 1, 2]
 # r_vec = np.array([1.0, 0, np.sqrt(3.0)]) * 1e4  # km (vetor posição)
 # v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
 
-dt = [10] # Horas
+# dt = [10] # Horas
 
-# TESTE PARAB.
-r_vec=np.array([10000.000000,0.000000,0.000000])
-v_vec = np.array([0.000000,6.313481,6.313481])
+# # TESTE PARAB.
+# r_vec=np.array([10000.000000,0.000000,0.000000])
+# v_vec = np.array([0.000000,6.313481,6.313481])
 
-# TESTE HIPERB.
-r_vec = np.array([15000.000000,0.000000,15000.000000])
-v_vec = np.array([4.000000,4.000000,4.000000])
+# # TESTE HIPERB.
+# r_vec = np.array([15000.000000,0.000000,15000.000000])
+# v_vec = np.array([4.000000,4.000000,4.000000])
 
 orbit_elem = calc_elements(r_vec, v_vec)
 
 # Constants
 GRAV_PARAM = 398600 # km³/s² (Terra)
 
-print(via_anomalia_excentrica(r_vec, v_vec, dt, orbit_elem, grav_parameter=GRAV_PARAM))
-
+answer = via_anomalia_excentrica(r_vec, v_vec, dt, orbit_elem, grav_parameter=GRAV_PARAM)
+print(answer)
+for t in dt:    
+    fig = plot_orbit(**calc_elements(answer.get(f'{t} horas')['r_vec'], answer.get(f'{t} horas')['v_vec']))
+    fig.savefig(f"images/{t}_horas.png")
 
