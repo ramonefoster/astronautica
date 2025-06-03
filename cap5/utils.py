@@ -77,6 +77,33 @@ import numpy as np
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
+def plot_comparison(time_steps, r_exact, v_exact, r_series, v_series):
+    """Gera gráficos comparativos para distância radial e velocidade."""
+    
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
+
+    # Gráfico da Distância Radial
+    ax1.plot(time_steps, r_exact, label='Solução Exata', color='blue')
+    ax1.plot(time_steps, r_series, label='Solução com Séries f e g', linestyle='--', color='red')
+    ax1.set_title('Comparação da Distância Radial', fontsize=16)
+    ax1.set_xlabel('Tempo (s)', fontsize=12)
+    ax1.set_ylabel('Distância Radial (km)', fontsize=12)
+    ax1.legend()
+    ax1.grid(True)
+
+    # Gráfico da Velocidade
+    ax2.plot(time_steps, v_exact, label='Solução Exata', color='blue')
+    ax2.plot(time_steps, v_series, label='Solução com Séries f e g', linestyle='--', color='red')
+    ax2.set_title('Comparação da Velocidade', fontsize=16)
+    ax2.set_xlabel('Tempo (s)', fontsize=12)
+    ax2.set_ylabel('Velocidade (km/s)', fontsize=12)
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    
 class AngleAnnotation3D:
     def __init__(self, ax, origin, v1, v2, radius=0.5, color='k', text=None):
         self.ax = ax
