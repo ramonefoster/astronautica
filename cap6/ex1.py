@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
     # Misc
@@ -56,7 +57,7 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
             'a (km)': a,
             'g (s)': g,
             'DeltaE (rad)': deltaE if a > 0 else deltaF,
-            'Deltat(s)': delta_tn
+            'Deltat (s)': delta_tn
         }
         table = pd.concat([table, pd.DataFrame([row])], ignore_index=True)
 
@@ -90,6 +91,27 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
     # Constnate A
     A = np.sqrt((r1*r2)/(1 - np.cos(delta_f))) * np.sin(delta_f)
     print(f"Constant A: {A}")
+
+    plot_a_vs_p(table)
+    plot_t_vs_p(table)
+
+def plot_a_vs_p(table):
+    plt.figure(figsize=(8, 5))
+    plt.plot(table['p (km)'], table['a (km)'])
+    plt.xlabel('Semi-latus rectum p (km)')
+    plt.ylabel('Semi-major axis a (km)')
+    plt.title('Semi-major axis a vs Semi-latus rectum p')
+    plt.grid(True)
+    plt.show()
+
+def plot_t_vs_p(table):
+    plt.figure(figsize=(8, 5))
+    plt.plot(table['p (km)'], table['Deltat (s)'])
+    plt.xlabel('Semi-latus rectum p (km)')
+    plt.ylabel('Tempo de voo - t (s)')
+    plt.title('Semi-major axis a vs Semi-latus rectum p')
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
     r1_vec = np.array([1, 1, 0]) # u.d.
