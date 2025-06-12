@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from utils import calc_elements, p_NR
+from utils import calc_elements, p_NR, plot_orbit
 
 def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
     # Misc
@@ -118,10 +118,10 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
     a_values = []
     # delta_f = 360-delta_f
     for p in p_values:
-        # if p <= pi:
-        #     p_values = np.delete(p_values, np.where(p_values == p))
-        #     continue
-        a = p / (1 - e**2)
+        if p <= pi:
+            p_values = np.delete(p_values, np.where(p_values == p))
+            continue
+        a = (m*k*p)/((2*m-l**2)*p**2 + 2*k*l*p - k**2)
         g = r1*r2*np.sin(delta_f)/(np.sqrt(grav_param*p))
         if a > 0:
             cosDeltaE = 1 - (k/(p*a))
@@ -130,12 +130,12 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
             delta_tn = g + np.sqrt(a**3/grav_param)*(deltaE - senDeltaE)
             
         else:
-            # if a == 0:
-            #     p_values = np.delete(p_values, np.where(p_values == p))
-            #     continue
-            # if p == pii:
-            #     p_values = np.delete(p_values, np.where(p_values == p))
-            #     continue
+            if a == 0:
+                p_values = np.delete(p_values, np.where(p_values == p))
+                continue
+            if p == pii:
+                p_values = np.delete(p_values, np.where(p_values == p))
+                continue
             
             coshDeltaF = 1 - (k/(p*a))
             deltaF = np.arccosh(coshDeltaF)
@@ -144,9 +144,12 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
         a_values.append(a)
         t_values.append(delta_tn)
 
+    
     plot_a_vs_p(p_values, a_values, pi, pii)
-    # plot_t_vs_p(p_values, t_values)
-    print(calc_elements(r1_vec, v1_vec, grav_parameter=grav_param))
+    plot_t_vs_p(p_values, t_values)
+    orb_ele = calc_elements(r1_vec, v1_vec, grav_parameter=grav_param)
+    print(orb_ele)
+    plot_orbit(**orb_ele)
 
 def plot_a_vs_p(p, a, pi, pii):
     plt.figure(figsize=(8, 5))
@@ -169,32 +172,31 @@ def plot_t_vs_p(p, t):
     plt.show()
 
 if __name__ == "__main__":
-    # r1_vec = np.array([1, 1, 0]) # u.d.
-    # r2_vec = np.array([-1, 1, 0]) # u.d.
+    grav_param = 398600
+
+    # r1_vec = np.array([1*6378, 1*6378, 0]) # u.d.
+    # r2_vec = np.array([-1*6378, 1*6378, 0]) # u.d.
     # dt = 500
     # p0 = None
-    # grav_param = 1
 
     # EXAMPLE
     # r1_vec = np.array([5, 0, 5]) * 1e3
     # r2_vec = np.array([4, 4, 5]) * 1e3
     # dt = 45 * 60
     # p0 = 1000
-    # grav_param = 389600
-
+    
     #Example2
     # r1_vec = np.array([5, 10, 2.1]) * 1e3
     # r2_vec = np.array([-14.6, 2.5, 7]) * 1e3
     # dt = 60 * 60
     # p0 = 10000
-    grav_param = 398600
 
-    # Exercicio 5
+    # # Exercicio 5
     r1_vec = np.array([.5*6378, .6*6378, .7*6378]) # u.d.
     r2_vec = np.array([0, -1*6378, 0]) # u.d.
     dt = 25 * 60
     p0 = None
-    # grav_param = 1
+
     solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param)
     
 
