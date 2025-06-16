@@ -344,9 +344,36 @@ def plot_orbit(a, e, I, Omega, w, f, h=None):
 
     # Plot Orbit
     # Find the index corresponding to the current true anomaly
-    ax.plot(orbit_inertial[0], orbit_inertial[1], orbit_inertial[2], 
-            label='Orbit', linewidth=.5)
-    
+    # ax.plot(orbit_inertial[0], orbit_inertial[1], orbit_inertial[2], 
+    #         label='Orbit', linewidth=.5)
+    earth_radius = 6378
+    # Calcular distância ao centro da Terra para cada ponto
+    distances = np.linalg.norm(orbit_inertial, axis=0)
+    above_surface = distances > earth_radius
+
+    # Identificar transições (de fora para dentro ou vice-versa)
+    transitions = np.where(np.diff(above_surface.astype(int)) != 0)[0]
+
+    # Plotar segmentos fora da Terra
+    for i in range(len(orbit_inertial[0]) - 1):
+        if above_surface[i] and above_surface[i+1]:
+            ax.plot(orbit_inertial[0][i:i+2],
+                    orbit_inertial[1][i:i+2],
+                    orbit_inertial[2][i:i+2],
+                    color='C0', linewidth=0.8)
+
+    # Marcar pontos de intersecção com a superfície da Terra
+    for idx in transitions:
+        # Interpolação linear para estimar ponto de intersecção
+        p1 = orbit_inertial[:, idx]
+        p2 = orbit_inertial[:, idx + 1]
+        d1 = np.linalg.norm(p1)
+        d2 = np.linalg.norm(p2)
+        alpha = (earth_radius - d1) / (d2 - d1) if d2 != d1 else 0.5
+        intersection = p1 + alpha * (p2 - p1)
+
+        ax.scatter(*intersection, color='orange', s=20, label='Intersection' if idx == transitions[0] else "")
+
     f_mod = f % (2 * np.pi)
     idx = np.searchsorted(theta, f_mod)
     half_idx = idx // 2 if idx > 0 else len(theta) // 4
@@ -385,7 +412,7 @@ def plot_orbit(a, e, I, Omega, w, f, h=None):
     
     # Plot Earth at the origin
     u, v = np.mgrid[0:2*np.pi:50j, 0:np.pi:25j]
-    earth_radius = 6378
+    
     x_earth = earth_radius * np.cos(u) * np.sin(v)
     y_earth = earth_radius * np.sin(u) * np.sin(v)
     z_earth = earth_radius * np.cos(v)
