@@ -10,7 +10,7 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600, solver="p"):
     if solver == 'p':
         v1_vec = via_p(r1_vec, r2_vec, delta_t, p0)
     if solver == 'u':
-        pass
+        v1_vec = universais(r1_vec, r2_vec, delta_t, grav_param)
 
     print(f"v1_vec = {v1_vec}")
 
@@ -184,6 +184,178 @@ def solve_fg(r1_vec, r2_vec, dt):
     print(table)
     return v1_vec
 
+def universais(r1_vec, r2_vec, delta_t, grav_param=398600):
+    table = pd.DataFrame()
+    # constantes
+    r1 = np.linalg.norm(r1_vec)
+    r2 = np.linalg.norm(r2_vec)
+    print(f"Magnitude for r1 = {r1} and r2 = {r2}")
+
+    r_r = np.dot(r1_vec, r2_vec)
+    cos_delta_f = r_r / (r1 * r2)
+    delta_f = np.arccos(cos_delta_f)
+    print(f"Delta_f = {delta_f}")
+
+    A = np.sqrt((r1*r2)/(1 - np.cos(delta_f)))*np.sin(delta_f)
+
+    z = 2.5
+    
+    tolerance = 1e-7
+    max_iter = 100
+    stop = False
+    for i in range(max_iter):
+        if z > 0:
+            C = (1 - np.cos(np.sqrt(z))) / z
+            S = (np.sqrt(z) - np.sin(np.sqrt(z))) / np.sqrt(z**3)
+        elif round(z, 10) == 0:
+            C = 0.5
+            S = 1/6
+        else:
+            C = (1 - np.cosh(np.sqrt(-z))) / z
+            S = (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / np.sqrt(-z**3)
+
+        y = r1 + r2 - A*(1-z*S)/np.sqrt(C)
+        X = np.sqrt(y/C)
+
+        delta_tn = (X**3*S + A*np.sqrt(y))/np.sqrt(grav_param)
+
+        # get new Z
+        #Newton-Raphson
+        func = delta_tn - delta_t
+        dsdz = (1/(2*z)*(C-3*S))
+        dcdz = (1/(2*z))*(1-z*S-2*C)
+        fprime = (X**3*( dsdz - (3*S)/(2*C)*dcdz ) + (A/8)*(3*S*np.sqrt(y)/C + A/X))/np.sqrt(grav_param)
+        z_new = z - func/fprime
+
+        if abs(delta_t - delta_tn) < tolerance:
+            print(f"Converged z: {z} after {i+1} iterations")
+            print(f"Iteration: {i+1}")
+            stop = True
+
+        row = {
+            'z': z_new,
+            'y': y,
+            'X': X,
+            'Deltat (s)': delta_tn
+        }
+        table = pd.concat([table, pd.DataFrame([row])], ignore_index=True)
+        if stop:
+            break
+        
+        z = z_new
+    else:
+        print("Did not converge for z")
+
+    f = 1 - y/r1
+    g = A*np.sqrt(y/grav_param)
+    g_dot = 1 - y/r2
+    print(f"f: {f}, g_dot: {g_dot}")
+
+    # Velocity
+    v1_vec = (r2_vec - f*r1_vec)/g
+    print(table)
+    return v1_vec
+
+def universais_bissecao(r1_vec, r2_vec, delta_t, grav_param=398600):
+    table = pd.DataFrame()
+    r1 = np.linalg.norm(r1_vec)
+    r2 = np.linalg.norm(r2_vec)
+    print(f"Magnitude for r1 = {r1} and r2 = {r2}")
+
+    r_r = np.dot(r1_vec, r2_vec)
+    cos_delta_f = r_r / (r1 * r2)
+    delta_f = np.arccos(cos_delta_f)
+    print(f"Delta_f = {delta_f}")
+
+    A = np.sqrt((r1*r2)/(1 - np.cos(delta_f)))*np.sin(delta_f)
+
+    # Bisection method parameters
+    z_low = -10.0
+    z_high = 10.0
+    tolerance = 1e-7
+    max_iter = 100
+    stop = False
+
+    def stumpff_C(z):
+        if z > 0:
+            return (1 - np.cos(np.sqrt(z))) / z
+        elif abs(z) < 1e-8:
+            return 0.5
+        else:
+            return (1 - np.cosh(np.sqrt(-z))) / z
+
+    def stumpff_S(z):
+        if z > 0:
+            return (np.sqrt(z) - np.sin(np.sqrt(z))) / (np.sqrt(z**3))
+        elif abs(z) < 1e-8:
+            return 1/6
+        else:
+            return (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / (np.sqrt((-z)**3))
+
+    def time_of_flight(z):
+        C = stumpff_C(z)
+        S = stumpff_S(z)
+        y = r1 + r2 - A*(1-z*S)/np.sqrt(C)
+        if C == 0 or y < 0:
+            return np.inf
+        X = np.sqrt(y/C)
+        return (X**3*S + A*np.sqrt(y))/np.sqrt(grav_param)
+
+    # Find initial interval [z_low, z_high] such that f(z_low)*f(z_high) < 0
+    f_low = time_of_flight(z_low) - delta_t
+    f_high = time_of_flight(z_high) - delta_t
+    while f_low * f_high > 0:
+        z_low *= 2
+        z_high *= 2
+        f_low = time_of_flight(z_low) - delta_t
+        f_high = time_of_flight(z_high) - delta_t
+        if abs(z_low) > 1e6 or abs(z_high) > 1e6:
+            print("Could not find valid interval for bisection.")
+            return None
+
+    for i in range(max_iter):
+        z_mid = (z_low + z_high) / 2
+        f_mid = time_of_flight(z_mid) - delta_t
+
+        row = {
+            'z_low': z_low,
+            'z_high': z_high,
+            'z_mid': z_mid,
+            'f_mid': f_mid
+        }
+        table = pd.concat([table, pd.DataFrame([row])], ignore_index=True)
+
+        if abs(f_mid) < tolerance:
+            print(f"Converged z: {z_mid} after {i+1} iterations")
+            stop = True
+            break
+
+        if f_low * f_mid < 0:
+            z_high = z_mid
+            f_high = f_mid
+        else:
+            z_low = z_mid
+            f_low = f_mid
+
+    if not stop:
+        print("Did not converge for z (bisection)")
+
+    # Use final z_mid to compute f, g, g_dot, v1_vec
+    z = z_mid
+    C = stumpff_C(z)
+    S = stumpff_S(z)
+    y = r1 + r2 - A*(1-z*S)/np.sqrt(C)
+    X = np.sqrt(y/C)
+    f = 1 - y/r1
+    g = A*np.sqrt(y/grav_param)
+    g_dot = 1 - y/r2
+
+    print(f"f: {f}, g_dot: {g_dot}")
+    v1_vec = (r2_vec - f*r1_vec)/g
+    print(table)
+    return v1_vec
+
+
 if __name__ == "__main__":
     grav_param = 398600
     
@@ -194,10 +366,10 @@ if __name__ == "__main__":
     # p0 = 1000
     
     #Example2
-    # r1_vec = np.array([5, 10, 2.1]) * 1e3
-    # r2_vec = np.array([-14.6, 2.5, 7]) * 1e3
-    # dt = 60 * 60
-    # p0 = 10000
+    r1_vec = np.array([5, 10, 2.1]) * 1e3
+    r2_vec = np.array([-14.6, 2.5, 7]) * 1e3
+    dt = 60 * 60
+    p0 = 10000
 
     #Sample
     # r1_vec = np.array([6, 0, 4])*1e3 # u.d.
@@ -206,11 +378,11 @@ if __name__ == "__main__":
     # p0 = None
 
     # # Exercicio 5
-    r1_vec = np.array([.5, .6, .7]) * 6378 # u.d.
-    r2_vec = np.array([0, -1, 0]) * 6378 # u.d.
-    dt = 25 * 60
-    p0 = None
+    # r1_vec = np.array([.5, .6, .7]) * 6378 # u.d.
+    # r2_vec = np.array([0, -1, 0]) * 6378 # u.d.
+    # dt = 25 * 60
+    # p0 = None
 
-    solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param)
+    solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="u")
     
 

@@ -31,9 +31,34 @@ def solve_gauss(r1_vec, r2_vec, grav_param=1):
     print(f"Initial p values for iteration {(pi+pii)/2}")
 
     p_values = np.linspace(0.1, 5, 300)
-    t_values = []
+    tc_values = []
+    tl_values = []
     a_values = []
 
+    # delta_f = 2*np.pi-delta_f
+    for p in p_values:
+        if p <= pi or p >= pii:
+            p_values = np.delete(p_values, np.where(p_values == p))
+            continue
+
+        a = (m*k*p)/((2*m-l**2)*p**2 + 2*k*l*p - k**2)
+        g = r1*r2*np.sin(delta_f)/(np.sqrt(grav_param*p))
+        if a > 0:
+            cosDeltaE = 1 - (k/(p*a))
+            senDeltaE = -(k - p*l)*np.tan(delta_f/2)/(p*np.sqrt(p*a))
+            deltaE = np.arctan2(senDeltaE,cosDeltaE)
+            if deltaE<0:
+                deltaE = 2*np.pi + deltaE
+            delta_tn = g + np.sqrt(a**3/grav_param)*(deltaE - senDeltaE)
+            
+        else:            
+            coshDeltaF = 1 - (k/(p*a))
+            deltaF = np.arccosh(coshDeltaF)
+            delta_tn = g + np.sqrt(((-a)**3)/grav_param)*(np.sinh(deltaF) - deltaF)
+
+        a_values.append(a)
+        tc_values.append(delta_tn)
+    
     delta_f = 2*np.pi-delta_f
     for p in p_values:
         if p <= pi or p >= pii:
@@ -50,43 +75,59 @@ def solve_gauss(r1_vec, r2_vec, grav_param=1):
                 deltaE = 2*np.pi + deltaE
             delta_tn = g + np.sqrt(a**3/grav_param)*(deltaE - senDeltaE)
             
-        else:
-            # p_values = np.delete(p_values, np.where(p_values == p))
-            # continue
-            # if a == 0:
-            #     p_values = np.delete(p_values, np.where(p_values == p))
-            #     continue
-            # if p == pii:
-            #     p_values = np.delete(p_values, np.where(p_values == p))
-            #     continue
-            
+        else:            
             coshDeltaF = 1 - (k/(p*a))
             deltaF = np.arccosh(coshDeltaF)
             delta_tn = g + np.sqrt(((-a)**3)/grav_param)*(np.sinh(deltaF) - deltaF)
 
         a_values.append(a)
-        t_values.append(delta_tn)
+        tl_values.append(delta_tn)
 
-    
+    a_min = m/(2*l - 2*np.sqrt(l**2 - 2*m))
+    print(f"a_min: {a_min}")
     print(f"amin energia: {min(a_values)}")
     plot_a_vs_p(p_values, a_values, pi, pii)
-    plot_t_vs_p(p_values, t_values)
+    plot_t_vs_p(p_values, tc_values, tl_values)
 
-def plot_a_vs_p(p, a, pi, pii):
+def plot_a_vs_p(p, a, pi, pii, tol=1e-3):
     plt.figure(figsize=(8, 5))
-    plt.plot(p, a)
-    plt.axvline(pi, color='r', linestyle='--', label='pi (assíntota)')
-    plt.axvline(pii, color='r', linestyle='--', label='pii (assíntota)')
-    plt.xlabel('Semi-latus rectum p (km)')
-    plt.ylabel('Semi-major axis a (km)')
+
+    p = np.array(p)
+    a = np.array(a)
+
+    # Inicializa listas para os novos valores com interrupções
+    p_clean = [p[0]]
+    a_clean = [a[0]]
+
+    for i in range(1, len(p)):
+        # Verifica se atravessou uma assíntota
+        crossed_pi = (p[i - 1] < pi and p[i] >= pi) or (p[i - 1] > pi and p[i] <= pi)
+        crossed_pii = (p[i - 1] < pii and p[i] >= pii) or (p[i - 1] > pii and p[i] <= pii)
+
+        if crossed_pi or crossed_pii:
+            # Insere um ponto nulo para quebrar a linha
+            p_clean.append(np.nan)
+            a_clean.append(np.nan)
+
+        p_clean.append(p[i])
+        a_clean.append(a[i])
+
+    plt.plot(p_clean, a_clean, label='a vs p')
+    plt.axvline(pi, color='r', linestyle='--', label='pi')
+    plt.axvline(pii, color='r', linestyle='--', label='pii')
+
+    plt.xlabel('Semi-latus rectum p (u.d.)')
+    plt.ylabel('Semi-major axis a (u.d.)')
     plt.title('Semi-major axis a vs Semi-latus rectum p')
     plt.grid(True)
+    plt.legend()
     plt.show()
 
-def plot_t_vs_p(p, t):
+def plot_t_vs_p(p, t_curto, t_longo):
     plt.figure(figsize=(8, 5))
-    plt.plot(p, t)
-    plt.xlabel('Semi-latus rectum p (km)')
+    plt.plot(p, t_curto, label='Caminho Curto', color='blue')
+    plt.plot(p, t_longo, label='Caminho Longo', color='green', linestyle='--')
+    plt.xlabel('Semi-latus rectum p (u.d.)')
     plt.ylabel('Tempo de voo - t (s)')
     plt.title('Semi-major axis a vs Semi-latus rectum p')
     plt.grid(True)

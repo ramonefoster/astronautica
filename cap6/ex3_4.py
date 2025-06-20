@@ -19,12 +19,13 @@ def calc_amin(r_earth, r_mars):
     a_values = [min_energy_transfer(r_earth, r_mars, df) for df in df_values]
 
     print(f"amin energia: {max(a_values)}")
+    print(f"test: {(r_earth+r_mars)/2}")
 
     t_flight = flight_time(max(a_values))
     print(t_flight)
     plt.figure(figsize=(8, 5))
-    plt.plot(df_values, a_values)
-    plt.xlabel('theta (radians)')
+    plt.plot(np.degrees(df_values), a_values)
+    plt.xlabel('theta (graus)')
     plt.ylabel('Semi-major axis a (km)')
     plt.title('Semi-major axis a vs Theta')
     plt.grid(True)
