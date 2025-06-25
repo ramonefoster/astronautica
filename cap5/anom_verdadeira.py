@@ -72,7 +72,7 @@ v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
 
 dt = [0.5, 1, 2] # Horas
 # Comparando com Ex2
-dt = [1/60, 2/60, 5/60, 10/60] # Horas
+# dt = [1/60, 2/60, 5/60, 10/60] # Horas
 
 # Dados Exemplo
 # r_vec = np.array([1.0, 0, np.sqrt(3.0)]) * 1e4  # km (vetor posição)

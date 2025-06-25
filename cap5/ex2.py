@@ -74,7 +74,7 @@ def via_series_fg(r_vec, v_vec, dt, grav_parameter=398600):
 r_vec = np.array([1.0, 1.0, 0]) * 1e4  # km (vetor posição)
 v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
 
-dt = [1/60, 2/60, 5/60, 10/60] # Horas
+dt = [1/60, 2/60, 5/60, 10/60, 15/60, 20/60] # Horas
 
 # Dados Exemplo
 # r_vec = np.array([8195.31, 528.38, 3945.04])  # km (vetor posição)
@@ -99,11 +99,11 @@ v_serie = [(answer.get(f'{t} horas')['v_vec']) for t in dt]
 rv_exact = np.array([np.concatenate((r, v)) for r, v in zip(r_exact, v_exact)])
 rv_serie = np.array([np.concatenate((r, v)) for r, v in zip(r_serie, v_serie)])
 
-# for i, t in enumerate(dt):
-#     err_percent = 100*(np.mean(np.abs((rv_serie[i] - rv_exact[i]) / rv_exact[i])))
-#     print(f"t = {t} horas: Erro relativo {err_percent}")
+for i, t in enumerate(dt):
+    err_percent = 100*(np.mean(np.abs((rv_serie[i] - rv_exact[i]) / rv_exact[i])))
+    print(f"t = {t} horas: Erro relativo {err_percent}")
 
-dt = [1*60, 2*60, 5*60, 10*60]
+dt = [1*60, 2*60, 5*60, 10*60, 15*60, 20*60]
 plot_comparison(dt, r_exact, v_exact, r_serie, v_serie)
 
 

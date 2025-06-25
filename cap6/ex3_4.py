@@ -19,6 +19,10 @@ def calc_amin(r_earth, r_mars):
     a_values = [min_energy_transfer(r_earth, r_mars, df) for df in df_values]
 
     print(f"amin energia: {max(a_values)}")
+    #excentricidade para a_min:
+    e = (r_mars - r_earth)/(r_mars + r_earth)
+    print(e)
+
     print(f"test: {(r_earth+r_mars)/2}")
 
     t_flight = flight_time(max(a_values))

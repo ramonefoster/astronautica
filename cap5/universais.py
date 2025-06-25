@@ -71,11 +71,6 @@ def via_anomalia_universal(r_vec, v_vec, dt, orbit_elem, grav_parameter=398600):
 
 # dt = [0.5, 1, 2] # Horas
 
-# # Dados Exemplo
-# # r_vec = np.array([1.0, 0, np.sqrt(3.0)]) * 1e4  # km (vetor posição)
-# # v_vec = np.array([2.0, 4.0, 4.0])  # km/s (vetor velocidade)
-# # dt = [10]
-
 # # Adaptado da lista 3
 # orbit_elem = calc_elements(r_vec, v_vec)
 
@@ -84,7 +79,7 @@ def via_anomalia_universal(r_vec, v_vec, dt, orbit_elem, grav_parameter=398600):
 
 # answer = via_anomalia_universal(r_vec, v_vec, dt, orbit_elem, grav_parameter=GRAV_PARAM)
 # print(answer)
-# for t in dt:    
+# # for t in dt:    
 #     fig = plot_orbit(**calc_elements(answer.get(f'{t} horas')['r_vec'], answer.get(f'{t} horas')['v_vec']))
 #     fig.savefig(f"images/{t}_horas.png")
 

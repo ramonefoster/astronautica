@@ -11,6 +11,8 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600, solver="p"):
         v1_vec = via_p(r1_vec, r2_vec, delta_t, p0)
     if solver == 'u':
         v1_vec = universais(r1_vec, r2_vec, delta_t, grav_param)
+    if solver == 'ub':
+        v1_vec = universais_bissecao(r1_vec, r2_vec, delta_t, grav_param)
 
     print(f"v1_vec = {v1_vec}")
 
@@ -110,12 +112,11 @@ def via_series_fg(r_vec, v_vec, dt, grav_parameter=398600):
     Parâmetros:
     r_vec (np.array): vetor de posição inicial (km)
     v_vec (np.array): vetor de velocidade inicial (km/s)
-    dt (list): intervalo de tempo (horas)
+    dt (float): intervalo de tempo (segundos)
     grav_parameter (float): parâmetro gravitacional (km³/s²)
     
     Retorna:
-    r_vec_t (np.array): vetor de posição no instante t (km)
-    v_vec_t (np.array): vetor de velocidade no instante t (km/s)
+    F, G
     """
 
     # r0, v0 e r0v0
@@ -158,7 +159,7 @@ def solve_fg(r1_vec, r2_vec, dt):
 
     v1_vec = (r2_vec - r1_vec)/dt
 
-    tolerance = 1e-7
+    tolerance = 1e-4
     max_iter = 100
     stop = False
 
@@ -366,10 +367,10 @@ if __name__ == "__main__":
     # p0 = 1000
     
     #Example2
-    r1_vec = np.array([5, 10, 2.1]) * 1e3
-    r2_vec = np.array([-14.6, 2.5, 7]) * 1e3
-    dt = 60 * 60
-    p0 = 10000
+    # r1_vec = np.array([5, 10, 2.1]) * 1e3
+    # r2_vec = np.array([-14.6, 2.5, 7]) * 1e3
+    # dt = 60 * 60
+    # p0 = 10000
 
     #Sample
     # r1_vec = np.array([6, 0, 4])*1e3 # u.d.
@@ -378,11 +379,11 @@ if __name__ == "__main__":
     # p0 = None
 
     # # Exercicio 5
-    # r1_vec = np.array([.5, .6, .7]) * 6378 # u.d.
-    # r2_vec = np.array([0, -1, 0]) * 6378 # u.d.
-    # dt = 25 * 60
-    # p0 = None
+    r1_vec = np.array([.5, .6, .7]) * 6378 # u.d.
+    r2_vec = np.array([0, -1, 0]) * 6378 # u.d.
+    dt = 25 * 60
+    p0 = None
 
-    solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="u")
+    solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="ub")
     
 

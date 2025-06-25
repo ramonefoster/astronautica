@@ -2,9 +2,18 @@ import numpy as np
 
 MU = 398600
 
-# INPUT
+# EX3
+# r0 = 7000
+# THETA_DEG = 45
+
+# EX4
+# r0 = 10000
+# THETA_DEG = 30
+
+#EX5
 r0 = 12000
 THETA_DEG = 75
+
 THETA = np.radians(THETA_DEG)
 
 # case 1

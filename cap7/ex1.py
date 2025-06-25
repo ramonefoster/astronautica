@@ -1,15 +1,4 @@
 import numpy as np
-from poliastro.bodies import Earth
-from poliastro.twobody import Orbit
-from poliastro.plotting import OrbitPlotter2D
-from astropy import units as u
-from poliastro.plotting.static import StaticOrbitPlotter
-import plotly.io as pio
-
-def plot_orbit(orbit, label, color='b'):
-    sample = orbit.sample(200)
-    r = orbit.sample(200).get_xyz().to_value(u.km).T
-    plt.plot(r[:, 0], r[:, 1], label=label, color=color)
 
 MU = 398600
 r0 = 6600
@@ -58,33 +47,7 @@ if sigma_f < 11.94:
         para a realização da manobra é de {delta_t_h}hs {delta_t_m} min {delta_t_s:.2f}s.
     """
     print(text)
-    import matplotlib.pyplot as plt
-
-    # Define initial and final circular orbits
-    r0_km = r0 * u.km
-    rf_km = rf * u.km
-
-    # Initial and final orbits
-    orbit_i = Orbit.circular(Earth, alt=(r0_km - Earth.R.to(u.km)))
-    orbit_f = Orbit.circular(Earth, alt=(rf_km - Earth.R.to(u.km)))
-
-    # Hohmann transfer orbit
-    a = (r0 + rf) / 2
-    ecc = (rf - r0) / (rf + r0)
-    orbit_t = Orbit.from_classical(Earth, a*u.km, ecc*u.one, 0*u.deg, 0*u.deg, 0*u.deg, 0*u.deg)
-
-    plt.figure(figsize=(8, 8))
-    plot_orbit(orbit_i, "Órbita Inicial", 'blue')
-    plot_orbit(orbit_t, "Órbita de Transferência", 'green')
-    plot_orbit(orbit_f, "Órbita Final", 'red')
-
-    plt.xlabel("x (km)")
-    plt.ylabel("y (km)")
-    plt.title("Manobra de Hohmann")
-    plt.legend()
-    plt.axis('equal')
-    plt.grid(True)
-    plt.show()
+    
 
 elif sigma_f >= 11.94:
     print("Bi-Parabolica")
