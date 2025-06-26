@@ -12,14 +12,15 @@ def solve_gauss(r1_vec, r2_vec, delta_t, p0, grav_param=398600, solver="p"):
     if solver == 'u':
         v1_vec = universais(r1_vec, r2_vec, delta_t, grav_param)
     if solver == 'ub':
-        v1_vec = universais_bissecao(r1_vec, r2_vec, delta_t, grav_param)
+        v1_vec = universais_bi(r1_vec, r2_vec, delta_t, grav_param)
+    if solver == 'pb':
+        v1_vec = via_p_bi(r1_vec, r2_vec, delta_t, grav_param)
 
     print(f"v1_vec = {v1_vec}")
 
     orb_ele = calc_elements(r1_vec, v1_vec, grav_parameter=grav_param)
-    print(orb_ele)
-    plot_orbit(**orb_ele)
-    return
+    # plot_orbit(**orb_ele)
+    return orb_ele
     
 
 def via_p(r1_vec, r2_vec, delta_t, p0, grav_param=398600):
@@ -257,8 +258,27 @@ def universais(r1_vec, r2_vec, delta_t, grav_param=398600):
     print(table)
     return v1_vec
 
-def universais_bissecao(r1_vec, r2_vec, delta_t, grav_param=398600):
-    table = pd.DataFrame()
+def bissecao(f, a, b, TOL, N):  
+    i = 1  
+    fa = f(a)  
+    while (i <= N):  
+        # iteracao da bissecao  
+        p = a + (b-a)/2  
+        fp = f(p)  
+        # condicao de parada  
+        if ((fp == 0) or ((b-a)/2 < TOL)):  
+            return p  
+        # bissecta o intervalo  
+        i = i+1  
+        if (fa * fp > 0):  
+            a = p  
+            fa = fp  
+        else:  
+            b = p  
+
+    raise NameError('Num. max. de iter. excedido!')
+
+def universais_bi(r1_vec, r2_vec, delta_t, grav_param=398600):
     r1 = np.linalg.norm(r1_vec)
     r2 = np.linalg.norm(r2_vec)
     print(f"Magnitude for r1 = {r1} and r2 = {r2}")
@@ -268,94 +288,173 @@ def universais_bissecao(r1_vec, r2_vec, delta_t, grav_param=398600):
     delta_f = np.arccos(cos_delta_f)
     print(f"Delta_f = {delta_f}")
 
-    A = np.sqrt((r1*r2)/(1 - np.cos(delta_f)))*np.sin(delta_f)
+    A = np.sqrt((r1 * r2) / (1 - np.cos(delta_f))) * np.sin(delta_f)
 
-    # Bisection method parameters
-    z_low = -10.0
-    z_high = 10.0
+    a = 0
+    b = 10  # Adjust bounds based on the problem
     tolerance = 1e-7
     max_iter = 100
-    stop = False
 
-    def stumpff_C(z):
+    # Function for bisection method to find the correct z
+    def find_z(z):
         if z > 0:
-            return (1 - np.cos(np.sqrt(z))) / z
-        elif abs(z) < 1e-8:
-            return 0.5
+            C = (1 - np.cos(np.sqrt(z))) / z
+            S = (np.sqrt(z) - np.sin(np.sqrt(z))) / np.sqrt(z**3)
+        elif round(z, 10) == 0:
+            C = 0.5
+            S = 1/6
         else:
-            return (1 - np.cosh(np.sqrt(-z))) / z
+            C = (1 - np.cosh(np.sqrt(-z))) / z
+            S = (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / np.sqrt(-z**3)
 
-    def stumpff_S(z):
-        if z > 0:
-            return (np.sqrt(z) - np.sin(np.sqrt(z))) / (np.sqrt(z**3))
-        elif abs(z) < 1e-8:
-            return 1/6
-        else:
-            return (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / (np.sqrt((-z)**3))
-
-    def time_of_flight(z):
-        C = stumpff_C(z)
-        S = stumpff_S(z)
-        y = r1 + r2 - A*(1-z*S)/np.sqrt(C)
-        if C == 0 or y < 0:
-            return np.inf
-        X = np.sqrt(y/C)
-        return (X**3*S + A*np.sqrt(y))/np.sqrt(grav_param)
-
-    # Find initial interval [z_low, z_high] such that f(z_low)*f(z_high) < 0
-    f_low = time_of_flight(z_low) - delta_t
-    f_high = time_of_flight(z_high) - delta_t
-    while f_low * f_high > 0:
-        z_low *= 2
-        z_high *= 2
-        f_low = time_of_flight(z_low) - delta_t
-        f_high = time_of_flight(z_high) - delta_t
-        if abs(z_low) > 1e6 or abs(z_high) > 1e6:
-            print("Could not find valid interval for bisection.")
-            return None
-
-    for i in range(max_iter):
-        z_mid = (z_low + z_high) / 2
-        f_mid = time_of_flight(z_mid) - delta_t
-
+        y = r1 + r2 - A * (1 - z * S) / np.sqrt(C)
+        X = np.sqrt(y / C)
+        delta_tn = (X**3 * S + A * np.sqrt(y)) / np.sqrt(grav_param)
         row = {
-            'z_low': z_low,
-            'z_high': z_high,
-            'z_mid': z_mid,
-            'f_mid': f_mid
+            'z': z,
+            'y': y,
+            'X': X,
+            'Deltat (s)': delta_tn
         }
-        table = pd.concat([table, pd.DataFrame([row])], ignore_index=True)
+        print({k: round(v, 4) if isinstance(v, float) else v for k, v in row.items()})
+        return delta_tn - delta_t
 
-        if abs(f_mid) < tolerance:
-            print(f"Converged z: {z_mid} after {i+1} iterations")
-            stop = True
-            break
+    try:
+        z_solution = bissecao(find_z, a, b, tolerance, max_iter)
+        print(f"Converged z: {z_solution}")
+    except NameError as e:
+        print(e)
+    
+    z = z_solution
+    if z > 0:
+        C = (1 - np.cos(np.sqrt(z))) / z
+        S = (np.sqrt(z) - np.sin(np.sqrt(z))) / np.sqrt(z**3)
+    elif abs(z) < 1e-8:
+        C = 0.5
+        S = 1 / 6
+    else:
+        C = (1 - np.cosh(np.sqrt(-z))) / z
+        S = (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / np.sqrt((-z)**3)
 
-        if f_low * f_mid < 0:
-            z_high = z_mid
-            f_high = f_mid
-        else:
-            z_low = z_mid
-            f_low = f_mid
+    y = r1 + r2 - A * (1 - z * S) / np.sqrt(C)
+    X = np.sqrt(y / C)
 
-    if not stop:
-        print("Did not converge for z (bisection)")
+    f = 1 - y / r1
+    g = A * np.sqrt(y / grav_param)
+    g_dot = 1 - y / r2
 
-    # Use final z_mid to compute f, g, g_dot, v1_vec
-    z = z_mid
-    C = stumpff_C(z)
-    S = stumpff_S(z)
-    y = r1 + r2 - A*(1-z*S)/np.sqrt(C)
-    X = np.sqrt(y/C)
-    f = 1 - y/r1
-    g = A*np.sqrt(y/grav_param)
-    g_dot = 1 - y/r2
+    print(f"f = {f}, g = {g}, g_dot = {g_dot}")
 
-    print(f"f: {f}, g_dot: {g_dot}")
-    v1_vec = (r2_vec - f*r1_vec)/g
-    print(table)
+    # Compute initial velocity vector
+    v1_vec = (r2_vec - f * r1_vec) / g
+
     return v1_vec
 
+def via_p_bi(r1_vec, r2_vec, delta_t, p0=None, grav_param=398600.0):
+    table = pd.DataFrame()
+
+    r1 = np.linalg.norm(r1_vec)
+    r2 = np.linalg.norm(r2_vec)
+    print(f"Magnitude for r1 = {r1} and r2 = {r2}")
+
+    r_r = np.dot(r1_vec, r2_vec)
+    cos_delta_f = r_r / (r1 * r2)
+    delta_f = np.arccos(cos_delta_f)
+    print(f"Delta_f = {delta_f}")
+
+    # Constantes
+    k = r1 * r2 * (1 - np.cos(delta_f))
+    l = r1 + r2
+    m = r1 * r2 * (1 + np.cos(delta_f))
+
+    # Valores críticos de p
+    pi = k / (l + np.sqrt(2 * m))
+    pii = k / (l - np.sqrt(2 * m))
+    print(f"Valores críticos de p: pi = {pi}, pii = {pii}")
+
+    if p0 is None:
+        p0 = (pi + pii) / 2
+    
+    # Define função a ser zerada
+    def funcao_delta_t(p):
+        try:            
+            a = (m*k*p)/((2*m-l**2)*p**2 + 2*k*l*p - k**2)
+            g = r1*r2*np.sin(delta_f)/(np.sqrt(grav_param*p))
+            if a > 0:
+                cosDeltaE = 1 - (k/(p*a))
+                senDeltaE = -((k - p*l)/(p*np.sqrt(p*a)))*np.tan(delta_f/2)
+                deltaE = np.arctan2(senDeltaE,cosDeltaE)
+                if deltaE<0:
+                    deltaE = 2*np.pi + deltaE
+                delta_tn = g + np.sqrt(a**3/grav_param)*(deltaE - senDeltaE)
+                dDtDp = -(g/(2*p)) - (3/2)*a*(delta_tn - g)*((k**2 + (2*m - l**2)*p**2)/(m*k*p**2)) + np.sqrt(a**3/grav_param)*(2*k*senDeltaE)/(p*(k-l*p))
+            else:
+                coshDeltaF = 1 - (k/(p*a))
+                deltaF = np.arccosh(coshDeltaF)
+                delta_tn = g + np.sqrt(((-a)**3)/grav_param)*(np.sinh(deltaF) - deltaF)
+                dDtDp = -(g/(2*p)) - (3/2)*a*(delta_tn - g)*((k**2 + (2*m - l**2)*p**2)/(m*k*p**2)) - np.sqrt((-a)**3/grav_param)*(2*k*np.sinh(deltaF))/(p*(k-l*p))
+
+            row = {
+                'p': p,
+                'a': a,
+                'g': g,
+                'Deltat (s)': delta_tn
+            }
+            print({k: round(v, 4) if isinstance(v, float) else v for k, v in row.items()})
+            return delta_tn - delta_t
+        except (ValueError, ZeroDivisionError, FloatingPointError):
+            return 1e6  # valor fora do domínio ou divisão por zero
+
+    # Intervalo para bisseção — pode ser ajustado conforme o problema
+    a_p = max(1e-3, pi * 0.1)
+    b_p = pii * 1.5
+    tolerance = 1e-4
+    max_iter = 100
+
+    try:
+        p_final = bissecao(funcao_delta_t, a_p, b_p, tolerance, max_iter)
+        print(f"Converged p: {p_final}")
+    except NameError as e:
+        print(e)
+        return None
+
+    # Recalcula as variáveis com p_final
+    p = p_final
+    a = (m * k * p) / ((2 * m - l**2) * p**2 + 2 * k * l * p - k**2)
+    g = r1 * r2 * np.sin(delta_f) / np.sqrt(grav_param * p)
+
+    if a > 0:
+        cosDeltaE = 1 - (k / (p * a))
+        senDeltaE = -((k - p * l) / (p * np.sqrt(p * a))) * np.tan(delta_f / 2)
+        deltaE = np.arctan2(senDeltaE, cosDeltaE)
+        if deltaE < 0:
+            deltaE += 2 * np.pi
+        delta_tn = g + np.sqrt(a**3 / grav_param) * (deltaE - senDeltaE)
+        delta_val = deltaE
+    else:
+        coshDeltaF = 1 - (k / (p * a))
+        deltaF = np.arccosh(coshDeltaF)
+        delta_tn = g + np.sqrt((-a)**3 / grav_param) * (np.sinh(deltaF) - deltaF)
+        delta_val = deltaF
+
+    f = 1 - (a/r1)*(1-cosDeltaE)
+    g_dot = 1 - (r1/p)*(1-np.cos(delta_f))
+    print(f"f: {f}, g_dot: {g_dot}")
+
+    # Velocity
+    v1_vec = (r2_vec - f*r1_vec)/g
+
+    row = {
+        'p (km)': p,
+        'a (km)': a,
+        'g (s)': g,
+        'Delta (rad)': delta_val,
+        'Deltat (s)': delta_tn
+    }
+    table = pd.concat([table, pd.DataFrame([row])], ignore_index=True)
+    print(table)
+
+    return v1_vec
 
 if __name__ == "__main__":
     grav_param = 398600
@@ -384,6 +483,13 @@ if __name__ == "__main__":
     dt = 25 * 60
     p0 = None
 
-    solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="ub")
+    orb_u = solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="pb")
+    orb = solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="p")
+    # orb_u = solve_gauss(r1_vec, r2_vec, dt, p0, grav_param=grav_param, solver="u")
+    print("Difference between orb and orb_u:")
+    for key in orb:
+        if key in orb_u:
+            print(f"{key}: {orb[key]} - {orb_u[key]} = {orb[key] - orb_u[key]}")
+    # print(orb)
     
 
